@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import { Scraper } from "./scraper";
 import { queries } from "./queries.example";
 import { sendProducts } from "./slack";
+import { setProduct } from "./repository";
 
 const functionBuilder = functions.region("asia-northeast1").runWith({
   memory: "1GB",
@@ -13,6 +14,10 @@ const runImpl = async () => {
   for (const query of queries) {
     const products = await scraper.fetchProducts(query);
     functions.logger.log("products", products);
+    for (const product of products) {
+      await setProduct(product);
+    }
+
     await sendProducts(products);
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
