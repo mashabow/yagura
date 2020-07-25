@@ -1,5 +1,10 @@
 import * as puppeteer from "puppeteer";
 
+export interface Query {
+  readonly keyword: string;
+  readonly category: number; // auccat
+}
+
 export class Scraper {
   private page?: puppeteer.Page;
 
@@ -12,11 +17,12 @@ export class Scraper {
     return scraper;
   }
 
-  async fetchProducts(): Promise<{}> {
+  async fetchProducts(query: Query): Promise<{}> {
     if (!this.page) throw new Error("Scraper not initialized");
 
+    const encodedKeyword = encodeURIComponent(query.keyword);
     await this.page.goto(
-      "https://auctions.yahoo.co.jp/search/search?p=%E3%83%86%E3%82%B9%E3%83%88&auccat=21700&va=%E3%83%86%E3%82%B9%E3%83%88&exflg=1&b=1&n=100&mode=2"
+      `https://auctions.yahoo.co.jp/search/search?p=${encodedKeyword}&auccat=${query.category}&va=${encodedKeyword}&exflg=1&b=1&n=100&mode=2`
     );
 
     return await this.page.$$eval(".Product", ($products) =>
