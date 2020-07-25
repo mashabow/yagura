@@ -1,12 +1,12 @@
 /** @jsx JSXSlack.h **/
 import { JSXSlack, Blocks, Section, Image, Field } from "@speee-js/jsx-slack";
 
+import * as functions from "firebase-functions";
 import { IncomingWebhook } from "@slack/webhook";
 import { Product } from "./scraper";
 
-const url = process.env.SLACK_WEBHOOK_URL;
-
-if (!url) throw new Error("SLACK_WEBHOOK_URL not set");
+const url: string | undefined = functions.config().slack?.webhook_url;
+if (!url) throw new Error("slack.webhook_url not set");
 
 const webhook = new IncomingWebhook(url);
 

@@ -1,6 +1,7 @@
 import * as functions from "firebase-functions";
 import { Scraper } from "./scraper";
 import { queries } from "./queries.example";
+import { sendProducts } from "./slack";
 
 export const run = functions
   .region("asia-northeast1")
@@ -13,6 +14,7 @@ export const run = functions
     for (const query of queries) {
       const products = await scraper.fetchProducts(query);
       functions.logger.log("products", products);
+      await sendProducts(products);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
