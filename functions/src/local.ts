@@ -1,5 +1,5 @@
 import { Scraper } from "./scraper";
-import { send } from "./slack";
+import { sendProducts } from "./slack";
 import { queries } from "./queries.example";
 
 (async () => {
@@ -11,7 +11,7 @@ import { queries } from "./queries.example";
   for (const query of queries) {
     const products = await scraper.fetchProducts(query);
     console.log(products);
-    await send();
+    await sendProducts(products);
     console.log("-".repeat(20));
   }
 

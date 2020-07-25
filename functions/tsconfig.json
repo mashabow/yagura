@@ -7,10 +7,10 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "lib": ["ESNext", "DOM"]
+    "lib": ["ESNext", "DOM"],
+    "jsx": "react",
+    "jsxFactory": "JSXSlack.h"
   },
   "compileOnSave": true,
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
