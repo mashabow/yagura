@@ -1,5 +1,10 @@
-import {scrape} from './scrape';
+import { Scraper } from "./scraper";
 
-scrape({
-  headless: false,
-});
+(async () => {
+  const scraper = await Scraper.init({
+    headless: false,
+  });
+  const products = await scraper.fetchProducts();
+  console.log(products);
+  await scraper.close();
+})();
