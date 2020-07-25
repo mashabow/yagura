@@ -2,6 +2,7 @@ import { Scraper } from "./scraper";
 import { sendProducts } from "./slack";
 import { queries } from "./queries.example";
 
+// tslint:disable-next-line:no-floating-promises
 (async () => {
   const scraper = await Scraper.init({
     headless: false,
