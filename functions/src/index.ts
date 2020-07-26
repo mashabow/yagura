@@ -41,7 +41,7 @@ const runImpl = async (): Promise<void> => {
     await conditionRepository.set({ ...condition, lastAccess: newLastAccess });
 
     if (newProducts.length) {
-      await sendProducts(newProducts);
+      await sendProducts(condition, newProducts);
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
