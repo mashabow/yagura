@@ -12,35 +12,37 @@ const functionBuilder = functions.region("asia-northeast1").runWith({
   memory: "1GB",
 });
 
-const runImpl = async () => {
+const runImpl = async (): Promise<void> => {
   const db = admin.firestore();
   const conditionRepository = new ConditionRepository(db);
   const productRepository = new ProductRepository(db);
 
-  const conditions = await conditionRepository.getAll();
-  functions.logger.log("conditions", conditions);
+  let conditions = await conditionRepository.getAll();
+  functions.logger.log("conditions.length", conditions.length);
   // 1つもなかったら作成する
   if (!conditions.length) {
     for (const condition of defaultConditions) {
       await conditionRepository.create(condition);
+      conditions = conditions.concat(defaultConditions);
     }
-    conditions.concat(defaultConditions);
   }
 
   const scraper = await Scraper.init();
 
-  const lastStarted = await productRepository.getLastStarted();
-  functions.logger.log("lastStarted", lastStarted);
-
   for (const condition of conditions) {
+    functions.logger.log("condition", { condition });
+
+    const lastStarted = await productRepository.getLastStarted(condition.id);
+    functions.logger.log("lastStarted", { lastStarted });
+
     const products = await scraper.fetchProducts(condition);
     const newProducts = lastStarted
       ? products.filter((product) => lastStarted.start < product.start)
       : products;
-    functions.logger.log("newProducts", newProducts);
+    functions.logger.log("newProducts.length", newProducts.length);
 
     for (const product of newProducts) {
-      await productRepository.set(product);
+      await productRepository.set(condition.id, product);
     }
 
     if (newProducts.length) {

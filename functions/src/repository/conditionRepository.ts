@@ -5,7 +5,7 @@ export class ConditionRepository {
 
   async getAll(): Promise<readonly Condition[]> {
     const snapshot = await this.db.collection("conditions").get();
-    return (snapshot.docs as any) as Condition[];
+    return snapshot.docs.map((doc) => doc.data() as Condition) as Condition[];
   }
 
   async create(condition: Condition): Promise<void> {
