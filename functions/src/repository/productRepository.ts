@@ -1,27 +1,28 @@
 import * as admin from "firebase-admin";
 import { Product } from "../model/product";
 
-admin.initializeApp();
-const db = admin.firestore();
+export class ProductRepository {
+  constructor(private db: FirebaseFirestore.Firestore) {}
 
-// 開始時刻（start）が最も新しい Product を取得
-export const getLastStarted = async (): Promise<Product | null> => {
-  const productsRef = db.collection("products");
-  const snapshot = await productsRef.orderBy("start", "desc").limit(1).get();
-  const last = snapshot.docs[0]?.data();
-  if (!last) return null;
-  return {
-    ...last,
-    start: last.start.toDate().toISOString(),
-    end: last.end.toDate().toISOString(),
-  } as Product;
-};
+  // 開始時刻（start）が最も新しい Product を取得
+  async getLastStarted(): Promise<Product | null> {
+    const productsRef = this.db.collection("products");
+    const snapshot = await productsRef.orderBy("start", "desc").limit(1).get();
+    const last = snapshot.docs[0]?.data();
+    if (!last) return null;
+    return {
+      ...last,
+      start: last.start.toDate().toISOString(),
+      end: last.end.toDate().toISOString(),
+    } as Product;
+  }
 
-export const set = async (product: Product) => {
-  const docRef = db.collection("products").doc(product.id);
-  await docRef.set({
-    ...product,
-    start: admin.firestore.Timestamp.fromDate(new Date(product.start)),
-    end: admin.firestore.Timestamp.fromDate(new Date(product.end)),
-  });
-};
+  async set(product: Product): Promise<void> {
+    const docRef = this.db.collection("products").doc(product.id);
+    await docRef.set({
+      ...product,
+      start: admin.firestore.Timestamp.fromDate(new Date(product.start)),
+      end: admin.firestore.Timestamp.fromDate(new Date(product.end)),
+    });
+  }
+}

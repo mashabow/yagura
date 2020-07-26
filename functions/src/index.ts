@@ -1,14 +1,23 @@
 import * as functions from "firebase-functions";
+import * as admin from "firebase-admin";
 import { Scraper } from "./scraper";
-import { conditions } from "./model/condition";
 import { sendProducts } from "./slack";
-import * as productRepository from "./repository/productRepository";
+import { ConditionRepository } from "./repository/conditionRepository";
+import { ProductRepository } from "./repository/productRepository";
 
 const functionBuilder = functions.region("asia-northeast1").runWith({
   memory: "1GB",
 });
 
 const runImpl = async () => {
+  admin.initializeApp();
+  const db = admin.firestore();
+  const conditionRepository = new ConditionRepository(db);
+  const productRepository = new ProductRepository(db);
+
+  const conditions = await conditionRepository.getAll();
+  functions.logger.log("conditions", conditions);
+
   const scraper = await Scraper.init();
 
   const lastStarted = await productRepository.getLastStarted();
