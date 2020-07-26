@@ -6,12 +6,13 @@ import { ConditionRepository } from "./repository/conditionRepository";
 import { ProductRepository } from "./repository/productRepository";
 import { defaultConditions } from "./model/condition";
 
+admin.initializeApp();
+
 const functionBuilder = functions.region("asia-northeast1").runWith({
   memory: "1GB",
 });
 
 const runImpl = async () => {
-  admin.initializeApp();
   const db = admin.firestore();
   const conditionRepository = new ConditionRepository(db);
   const productRepository = new ProductRepository(db);
