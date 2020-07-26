@@ -72,7 +72,7 @@ export class Scraper {
             image,
             seller,
             end,
-          } as Product;
+          };
         })
         .filter((product): product is Product => product !== null)
     );
