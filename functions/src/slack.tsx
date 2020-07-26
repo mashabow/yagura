@@ -18,6 +18,9 @@ if (!url) throw new Error("slack.webhook_url not set");
 
 const webhook = new IncomingWebhook(url);
 
+// Slack が受け付ける blocks は最大 50 要素なので、それ以下にしておく
+const MAX_PRODUCTS = 20;
+
 export const sendProducts = async (
   condition: Condition,
   products: readonly Product[]
@@ -30,7 +33,7 @@ export const sendProducts = async (
           <code>{condition.keyword}</code>
         </a>
       </Section>
-      {products.map((product) => (
+      {products.slice(0, MAX_PRODUCTS).map((product) => (
         <Section>
           <strong>
             <a
@@ -50,6 +53,9 @@ export const sendProducts = async (
           <Image src={product.image} alt="商品画像" />
         </Section>
       ))}
+      {products.length > MAX_PRODUCTS && (
+        <Section>ほか {products.length - MAX_PRODUCTS} 件</Section>
+      )}
       <Divider />
     </Blocks>
   );
@@ -58,9 +64,10 @@ export const sendProducts = async (
     await webhook.send({
       blocks,
     });
-  } catch (e) {
-    console.error(e.message);
-    console.error(e.response);
-    console.log(JSON.stringify(blocks, null, 2));
+  } catch (error) {
+    functions.logger.error("error.message", error.message);
+    functions.logger.error("error response", error.original.response.data);
+    functions.logger.error("error", { error });
+    functions.logger.log("blocks", { blocks });
   }
 };
