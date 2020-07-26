@@ -17,15 +17,11 @@ const runImpl = async (): Promise<void> => {
   const conditionRepository = new ConditionRepository(db);
   const productRepository = new ProductRepository(db);
 
-  let conditions = await conditionRepository.getAll();
-  functions.logger.log("conditions.length", conditions.length);
-  // 1つもなかったら作成する
-  if (!conditions.length) {
-    for (const condition of defaultConditions) {
-      await conditionRepository.set(condition);
-      conditions = conditions.concat(defaultConditions);
-    }
-  }
+  const storedConditions = await conditionRepository.getAll();
+  functions.logger.log("storedConditions.length", storedConditions.length);
+  const conditions = storedConditions.length
+    ? storedConditions
+    : defaultConditions;
 
   const scraper = await Scraper.init();
 
