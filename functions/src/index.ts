@@ -22,7 +22,7 @@ const runImpl = async (): Promise<void> => {
   // 1つもなかったら作成する
   if (!conditions.length) {
     for (const condition of defaultConditions) {
-      await conditionRepository.create(condition);
+      await conditionRepository.set(condition);
       conditions = conditions.concat(defaultConditions);
     }
   }
@@ -32,18 +32,17 @@ const runImpl = async (): Promise<void> => {
   for (const condition of conditions) {
     functions.logger.log("condition", { condition });
 
-    const lastStarted = await productRepository.getLastStarted(condition.id);
-    functions.logger.log("lastStarted", { lastStarted });
-
+    const newLastAccess = new Date();
     const products = await scraper.fetchProducts(condition);
-    const newProducts = lastStarted
-      ? products.filter((product) => lastStarted.start < product.start)
-      : products;
+    const newProducts = products.filter(
+      (product) => condition.lastAccess < new Date(product.start)
+    );
     functions.logger.log("newProducts.length", newProducts.length);
 
     for (const product of newProducts) {
       await productRepository.set(condition.id, product);
     }
+    await conditionRepository.set({ ...condition, lastAccess: newLastAccess });
 
     if (newProducts.length) {
       await sendProducts(newProducts);

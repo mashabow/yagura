@@ -1,3 +1,4 @@
+import * as admin from "firebase-admin";
 import { Condition } from "../model/condition";
 
 export class ConditionRepository {
@@ -5,11 +6,20 @@ export class ConditionRepository {
 
   async getAll(): Promise<readonly Condition[]> {
     const snapshot = await this.db.collection("conditions").get();
-    return snapshot.docs.map((doc) => doc.data() as Condition) as Condition[];
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        lastAccess: data.lastAccess.toDate(),
+      } as Condition;
+    });
   }
 
-  async create(condition: Condition): Promise<void> {
+  async set(condition: Condition): Promise<void> {
     const docRef = this.db.collection("conditions").doc(condition.id);
-    await docRef.set(condition);
+    await docRef.set({
+      ...condition,
+      lastAccess: admin.firestore.Timestamp.fromDate(condition.lastAccess),
+    });
   }
 }
