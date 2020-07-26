@@ -11,7 +11,8 @@ export interface Product {
   readonly price: number;
   readonly image: string;
   readonly seller: string;
-  readonly end: string;
+  readonly start: string; // ISOString
+  readonly end: string; // ISOString
 }
 
 export class Scraper {
@@ -46,8 +47,9 @@ export class Scraper {
           const ylk = Object.fromEntries(
             $title.dataset.ylk?.split(";").map((s) => s.split(":")) ?? []
           ) as Record<string, string | undefined>;
-          const { cid: id, end: endUnixTime } = ylk;
-          if (!id || !endUnixTime) return null;
+          const { cid: id, st: startUnixTime, end: endUnixTime } = ylk;
+          if (!id || !endUnixTime || !startUnixTime) return null;
+          const start = new Date(parseInt(startUnixTime) * 1000).toISOString();
           const end = new Date(parseInt(endUnixTime) * 1000).toISOString();
 
           const $price = $product.querySelector<HTMLElement>(
@@ -71,6 +73,7 @@ export class Scraper {
             price,
             image,
             seller,
+            start,
             end,
           };
         })
