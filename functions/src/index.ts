@@ -25,7 +25,11 @@ const runImpl = async () => {
       await repository.setProduct(product);
     }
 
-    await sendProducts(newProducts);
+    if (newProducts.length) {
+      await sendProducts(newProducts);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   await scraper.close();
