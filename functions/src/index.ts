@@ -27,7 +27,7 @@ const runImpl = async (): Promise<void> => {
     const newLastAccess = new Date();
     const products = await scrapeProducts(condition);
     const newProducts = products.filter(
-      (product) => condition.lastAccess < new Date(product.start)
+      (product) => condition.lastAccess < product.start
     );
     functions.logger.log("newProducts.length", newProducts.length);
 
