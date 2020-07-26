@@ -1,15 +1,6 @@
 import * as puppeteer from "puppeteer";
 import { Condition } from "./model/condition";
-
-export interface Product {
-  readonly id: string;
-  readonly title: string;
-  readonly price: number;
-  readonly image: string;
-  readonly seller: string;
-  readonly start: string; // ISOString
-  readonly end: string; // ISOString
-}
+import { Product } from "./model/product";
 
 export class Scraper {
   private page?: puppeteer.Page;

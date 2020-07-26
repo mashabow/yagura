@@ -2,7 +2,7 @@ import * as functions from "firebase-functions";
 import { Scraper } from "./scraper";
 import { conditions } from "./model/condition";
 import { sendProducts } from "./slack";
-import * as repository from "./repository";
+import * as productRepository from "./repository/productRepository";
 
 const functionBuilder = functions.region("asia-northeast1").runWith({
   memory: "1GB",
@@ -11,7 +11,7 @@ const functionBuilder = functions.region("asia-northeast1").runWith({
 const runImpl = async () => {
   const scraper = await Scraper.init();
 
-  const lastStarted = await repository.getLastStartedProduct();
+  const lastStarted = await productRepository.getLastStarted();
   functions.logger.log("lastStarted", lastStarted);
 
   for (const condition of conditions) {
@@ -22,7 +22,7 @@ const runImpl = async () => {
     functions.logger.log("newProducts", newProducts);
 
     for (const product of newProducts) {
-      await repository.setProduct(product);
+      await productRepository.set(product);
     }
 
     if (newProducts.length) {
