@@ -12,8 +12,8 @@ export class ProductRepository {
       .doc(product.id);
     await productRef.set({
       ...product,
-      start: admin.firestore.Timestamp.fromDate(new Date(product.start)),
-      end: admin.firestore.Timestamp.fromDate(new Date(product.end)),
+      start: admin.firestore.Timestamp.fromDate(product.start),
+      end: admin.firestore.Timestamp.fromDate(product.end),
     });
   }
 }

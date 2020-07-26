@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { Scraper } from "./scraper";
+import { scrapeProducts } from "./scraper";
 import { sendProducts } from "./slack";
 import { ConditionRepository } from "./repository/conditionRepository";
 import { ProductRepository } from "./repository/productRepository";
@@ -8,9 +8,7 @@ import { defaultConditions } from "./model/condition";
 
 admin.initializeApp();
 
-const functionBuilder = functions.region("asia-northeast1").runWith({
-  memory: "1GB",
-});
+const functionBuilder = functions.region("asia-northeast1");
 
 const runImpl = async (): Promise<void> => {
   const db = admin.firestore();
@@ -23,13 +21,11 @@ const runImpl = async (): Promise<void> => {
     ? storedConditions
     : defaultConditions;
 
-  const scraper = await Scraper.init();
-
   for (const condition of conditions) {
     functions.logger.log("condition", { condition });
 
     const newLastAccess = new Date();
-    const products = await scraper.fetchProducts(condition);
+    const products = await scrapeProducts(condition);
     const newProducts = products.filter(
       (product) => condition.lastAccess < new Date(product.start)
     );
@@ -46,8 +42,6 @@ const runImpl = async (): Promise<void> => {
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
-
-  await scraper.close();
 };
 
 export const run = functionBuilder.https.onRequest(async (req, res) => {
