@@ -1,7 +1,8 @@
 import * as functions from "firebase-functions";
 import { Scraper } from "./scraper";
-import { queries } from "./queries.example";
+import { conditions } from "./conditions.example";
 import { sendProducts } from "./slack";
+import * as repository from "./repository";
 
 const functionBuilder = functions.region("asia-northeast1").runWith({
   memory: "1GB",
@@ -10,10 +11,24 @@ const functionBuilder = functions.region("asia-northeast1").runWith({
 const runImpl = async () => {
   const scraper = await Scraper.init();
 
-  for (const query of queries) {
-    const products = await scraper.fetchProducts(query);
-    functions.logger.log("products", products);
-    await sendProducts(products);
+  const lastStarted = await repository.getLastStartedProduct();
+  functions.logger.log("lastStarted", lastStarted);
+
+  for (const condition of conditions) {
+    const products = await scraper.fetchProducts(condition);
+    const newProducts = lastStarted
+      ? products.filter((product) => lastStarted.start < product.start)
+      : products;
+    functions.logger.log("newProducts", newProducts);
+
+    for (const product of newProducts) {
+      await repository.setProduct(product);
+    }
+
+    if (newProducts.length) {
+      await sendProducts(newProducts);
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 

@@ -1,6 +1,6 @@
 import * as puppeteer from "puppeteer";
 
-export interface Query {
+export interface Condition {
   readonly keyword: string;
   readonly category: number; // auccat
 }
@@ -11,7 +11,8 @@ export interface Product {
   readonly price: number;
   readonly image: string;
   readonly seller: string;
-  readonly end: string;
+  readonly start: string; // ISOString
+  readonly end: string; // ISOString
 }
 
 export class Scraper {
@@ -26,12 +27,12 @@ export class Scraper {
     return scraper;
   }
 
-  async fetchProducts(query: Query): Promise<readonly Product[]> {
+  async fetchProducts(condition: Condition): Promise<readonly Product[]> {
     if (!this.page) throw new Error("Scraper not initialized");
 
-    const encodedKeyword = encodeURIComponent(query.keyword);
+    const encodedKeyword = encodeURIComponent(condition.keyword);
     await this.page.goto(
-      `https://auctions.yahoo.co.jp/search/search?p=${encodedKeyword}&auccat=${query.category}&va=${encodedKeyword}&exflg=1&b=1&n=100&mode=2`
+      `https://auctions.yahoo.co.jp/search/search?p=${encodedKeyword}&auccat=${condition.category}&va=${encodedKeyword}&exflg=1&b=1&n=100&mode=2`
     );
 
     return await this.page.$$eval(".Product", ($products) =>
@@ -46,8 +47,9 @@ export class Scraper {
           const ylk = Object.fromEntries(
             $title.dataset.ylk?.split(";").map((s) => s.split(":")) ?? []
           ) as Record<string, string | undefined>;
-          const { cid: id, end: endUnixTime } = ylk;
-          if (!id || !endUnixTime) return null;
+          const { cid: id, st: startUnixTime, end: endUnixTime } = ylk;
+          if (!id || !endUnixTime || !startUnixTime) return null;
+          const start = new Date(parseInt(startUnixTime) * 1000).toISOString();
           const end = new Date(parseInt(endUnixTime) * 1000).toISOString();
 
           const $price = $product.querySelector<HTMLElement>(
@@ -71,8 +73,9 @@ export class Scraper {
             price,
             image,
             seller,
+            start,
             end,
-          } as Product;
+          };
         })
         .filter((product): product is Product => product !== null)
     );
