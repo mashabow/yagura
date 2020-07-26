@@ -26,8 +26,8 @@ export const scrapeProducts = async (
           ) ?? {};
       const { cid: id, st: startUnixTime, end: endUnixTime } = ylk;
       if (!id || !endUnixTime || !startUnixTime) return null;
-      const start = new Date(parseInt(startUnixTime) * 1000).toISOString();
-      const end = new Date(parseInt(endUnixTime) * 1000).toISOString();
+      const start = new Date(parseInt(startUnixTime) * 1000);
+      const end = new Date(parseInt(endUnixTime) * 1000);
 
       const $price = $product.querySelector<HTMLElement>(
         ".Product__priceValue"

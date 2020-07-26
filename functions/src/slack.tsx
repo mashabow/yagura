@@ -45,10 +45,7 @@ export const sendProducts = async (
           <Field>💰 {product.price.toLocaleString()}円</Field>
           <Field>👤 {product.seller}</Field>
           <Field>
-            🕒{" "}
-            <time dateTime={new Date(product.end)}>
-              {"{date_pretty} {time}"}
-            </time>
+            🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
           </Field>
           <Image src={product.image} alt="商品画像" />
         </Section>

@@ -4,6 +4,6 @@ export interface Product {
   readonly price: number;
   readonly image: string;
   readonly seller: string;
-  readonly start: string; // ISOString
-  readonly end: string; // ISOString
+  readonly start: Date;
+  readonly end: Date;
 }
