@@ -7,7 +7,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
-    "lib": ["ESNext", "DOM"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "react",
     "jsxFactory": "JSXSlack.h"
   },
