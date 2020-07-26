@@ -1,3 +1,5 @@
+import * as querystring from "querystring";
+
 export interface Condition {
   readonly id: string;
   readonly lastAccess: Date;
@@ -19,3 +21,16 @@ export const defaultConditions: readonly Condition[] = [
     category: 27727, // おもちゃ、ゲーム > ゲーム
   },
 ];
+
+export const toURL = (condition: Condition): string => {
+  const qs = querystring.stringify({
+    p: condition.keyword,
+    auccat: condition.category,
+    va: condition.keyword,
+    exflg: 1,
+    b: 1,
+    n: 100,
+    mode: 2,
+  });
+  return `https://auctions.yahoo.co.jp/search/search?${qs}`;
+};
