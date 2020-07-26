@@ -1,9 +1,17 @@
 /** @jsx JSXSlack.h **/
-import { JSXSlack, Blocks, Section, Image, Field } from "@speee-js/jsx-slack";
+import {
+  JSXSlack,
+  Blocks,
+  Section,
+  Image,
+  Field,
+  Divider,
+} from "@speee-js/jsx-slack";
 
 import * as functions from "firebase-functions";
 import { IncomingWebhook } from "@slack/webhook";
-import { Product } from "./scraper";
+import { Product } from "./model/product";
+import { Condition, toURL } from "./model/condition";
 
 const url: string | undefined = functions.config().slack?.webhook_url;
 if (!url) throw new Error("slack.webhook_url not set");
@@ -11,11 +19,18 @@ if (!url) throw new Error("slack.webhook_url not set");
 const webhook = new IncomingWebhook(url);
 
 export const sendProducts = async (
+  condition: Condition,
   products: readonly Product[]
 ): Promise<void> => {
   const blocks = JSXSlack(
     <Blocks>
-      {products.slice(0, 5).map((product) => (
+      <Section>
+        🔍 検索条件{" "}
+        <a href={toURL(condition)}>
+          <code>{condition.keyword}</code>
+        </a>
+      </Section>
+      {products.map((product) => (
         <Section>
           <strong>
             <a
@@ -35,6 +50,7 @@ export const sendProducts = async (
           <Image src={product.image} alt="商品画像" />
         </Section>
       ))}
+      <Divider />
     </Blocks>
   );
 

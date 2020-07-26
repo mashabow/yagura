@@ -1,19 +1,6 @@
 import * as puppeteer from "puppeteer";
-
-export interface Condition {
-  readonly keyword: string;
-  readonly category: number; // auccat
-}
-
-export interface Product {
-  readonly id: string;
-  readonly title: string;
-  readonly price: number;
-  readonly image: string;
-  readonly seller: string;
-  readonly start: string; // ISOString
-  readonly end: string; // ISOString
-}
+import { Condition, toURL } from "./model/condition";
+import { Product } from "./model/product";
 
 export class Scraper {
   private page?: puppeteer.Page;
@@ -30,10 +17,7 @@ export class Scraper {
   async fetchProducts(condition: Condition): Promise<readonly Product[]> {
     if (!this.page) throw new Error("Scraper not initialized");
 
-    const encodedKeyword = encodeURIComponent(condition.keyword);
-    await this.page.goto(
-      `https://auctions.yahoo.co.jp/search/search?p=${encodedKeyword}&auccat=${condition.category}&va=${encodedKeyword}&exflg=1&b=1&n=100&mode=2`
-    );
+    await this.page.goto(toURL(condition));
 
     return await this.page.$$eval(".Product", ($products) =>
       ($products as HTMLElement[])
