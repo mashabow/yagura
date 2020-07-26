@@ -1,4 +1,7 @@
-import { Condition } from "./scraper";
+export interface Condition {
+  readonly keyword: string;
+  readonly category: number; // auccat
+}
 
 export const conditions: readonly Condition[] = [
   {

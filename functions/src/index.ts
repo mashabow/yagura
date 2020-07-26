@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import { Scraper } from "./scraper";
-import { conditions } from "./conditions.example";
+import { conditions } from "./model/condition";
 import { sendProducts } from "./slack";
 import * as repository from "./repository";
 

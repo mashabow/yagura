@@ -1,9 +1,5 @@
 import * as puppeteer from "puppeteer";
-
-export interface Condition {
-  readonly keyword: string;
-  readonly category: number; // auccat
-}
+import { Condition } from "./model/condition";
 
 export interface Product {
   readonly id: string;
