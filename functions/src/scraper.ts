@@ -1,6 +1,6 @@
 import * as puppeteer from "puppeteer";
 
-export interface Query {
+export interface Condition {
   readonly keyword: string;
   readonly category: number; // auccat
 }
@@ -27,12 +27,12 @@ export class Scraper {
     return scraper;
   }
 
-  async fetchProducts(query: Query): Promise<readonly Product[]> {
+  async fetchProducts(condition: Condition): Promise<readonly Product[]> {
     if (!this.page) throw new Error("Scraper not initialized");
 
-    const encodedKeyword = encodeURIComponent(query.keyword);
+    const encodedKeyword = encodeURIComponent(condition.keyword);
     await this.page.goto(
-      `https://auctions.yahoo.co.jp/search/search?p=${encodedKeyword}&auccat=${query.category}&va=${encodedKeyword}&exflg=1&b=1&n=100&mode=2`
+      `https://auctions.yahoo.co.jp/search/search?p=${encodedKeyword}&auccat=${condition.category}&va=${encodedKeyword}&exflg=1&b=1&n=100&mode=2`
     );
 
     return await this.page.$$eval(".Product", ($products) =>

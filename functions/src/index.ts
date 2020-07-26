@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import { Scraper } from "./scraper";
-import { queries } from "./queries.example";
+import { conditions } from "./conditions.example";
 import { sendProducts } from "./slack";
 import * as repository from "./repository";
 
@@ -14,8 +14,8 @@ const runImpl = async () => {
   const lastStarted = await repository.getLastStartedProduct();
   functions.logger.log("lastStarted", lastStarted);
 
-  for (const query of queries) {
-    const products = await scraper.fetchProducts(query);
+  for (const condition of conditions) {
+    const products = await scraper.fetchProducts(condition);
     const newProducts = lastStarted
       ? products.filter((product) => lastStarted.start < product.start)
       : products;
