@@ -3,7 +3,7 @@ export interface Condition {
   readonly category: number; // auccat
 }
 
-export const conditions: readonly Condition[] = [
+export const defaultConditions: readonly Condition[] = [
   {
     keyword: "テスト",
     category: 21700, // 本、雑誌 > コンピュータとインターネット

@@ -4,6 +4,7 @@ import { Scraper } from "./scraper";
 import { sendProducts } from "./slack";
 import { ConditionRepository } from "./repository/conditionRepository";
 import { ProductRepository } from "./repository/productRepository";
+import { defaultConditions } from "./model/condition";
 
 const functionBuilder = functions.region("asia-northeast1").runWith({
   memory: "1GB",
@@ -17,6 +18,13 @@ const runImpl = async () => {
 
   const conditions = await conditionRepository.getAll();
   functions.logger.log("conditions", conditions);
+  // 1つもなかったら作成する
+  if (!conditions.length) {
+    for (const condition of defaultConditions) {
+      await conditionRepository.create(condition);
+    }
+    conditions.concat(defaultConditions);
+  }
 
   const scraper = await Scraper.init();
 
