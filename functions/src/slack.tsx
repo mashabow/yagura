@@ -6,6 +6,9 @@ import {
   Image,
   Field,
   Divider,
+  Button,
+  Fragment,
+  Actions,
 } from "@speee-js/jsx-slack";
 
 import * as functions from "firebase-functions";
@@ -42,27 +45,41 @@ export const sendProducts = async (
         🔍 検索条件{" "}
         <a href={toURL(condition)}>
           <code>{condition.keyword}</code>
-        </a>
+        </a>{" "}
+        の新着：{products.length}件
       </Section>
       {products.slice(0, MAX_PRODUCTS).map((product) => (
-        <Section>
-          <strong>
-            <a
-              href={`https://page.auctions.yahoo.co.jp/jp/auction/${product.id}`}
+        <Fragment>
+          <Section>
+            <strong>
+              <a
+                href={`https://page.auctions.yahoo.co.jp/jp/auction/${product.id}`}
+              >
+                {product.title}
+              </a>
+            </strong>
+            <Field>💰 {product.price.toLocaleString()}円</Field>
+            <Field>👤 {product.seller}</Field>
+            <Field>
+              🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
+            </Field>
+            <Image src={product.image} alt="商品画像" />
+          </Section>
+          <Actions>
+            <Button
+              actionId="like"
+              value={JSON.stringify({
+                conditionId: condition.id,
+                productId: product.id,
+              })}
             >
-              {product.title}
-            </a>
-          </strong>
-          <Field>💰 {product.price.toLocaleString()}円</Field>
-          <Field>👤 {product.seller}</Field>
-          <Field>
-            🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
-          </Field>
-          <Image src={product.image} alt="商品画像" />
-        </Section>
+              気になる
+            </Button>
+          </Actions>
+        </Fragment>
       ))}
       {products.length > MAX_PRODUCTS && (
-        <Section>ほか {products.length - MAX_PRODUCTS} 件</Section>
+        <Section>ほか{products.length - MAX_PRODUCTS}件</Section>
       )}
       <Divider />
     </Blocks>
