@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { scrapeProducts } from "./scraper";
-import { sendProducts } from "./slack";
+import { slackApp, sendProducts } from "./slack";
 import { ConditionRepository } from "./repository/conditionRepository";
 import { ProductRepository } from "./repository/productRepository";
 import { defaultConditions } from "./model/condition";
@@ -54,3 +54,5 @@ export const scheduledRun = functionBuilder.pubsub
   .onRun(async (context) => {
     await runImpl();
   });
+
+export const slack = functionBuilder.https.onRequest(slackApp);

@@ -9,14 +9,25 @@ import {
 } from "@speee-js/jsx-slack";
 
 import * as functions from "firebase-functions";
-import { IncomingWebhook } from "@slack/webhook";
+import { App, ExpressReceiver } from "@slack/bolt";
 import { Product } from "./model/product";
 import { Condition, toURL } from "./model/condition";
 
-const url: string | undefined = functions.config().slack?.webhook_url;
-if (!url) throw new Error("slack.webhook_url not set");
+const config = functions.config();
 
-const webhook = new IncomingWebhook(url);
+const expressReceiver = new ExpressReceiver({
+  signingSecret: config.slack.signing_secret,
+  endpoints: "/events",
+  processBeforeResponse: true,
+});
+
+const app = new App({
+  receiver: expressReceiver,
+  token: config.slack.bot_token,
+  processBeforeResponse: true,
+});
+
+export const slackApp = expressReceiver.app;
 
 // Slack が受け付ける blocks は最大 50 要素なので、それ以下にしておく
 const MAX_PRODUCTS = 20;
@@ -58,12 +69,13 @@ export const sendProducts = async (
   );
 
   try {
-    await webhook.send({
+    await app.client.chat.postMessage({
+      token: config.slack.bot_token,
+      channel: "C018EDJ858Q", // TODO: 自動で設定
+      text: `[${condition.keyword}] の新着：${products.length}件`,
       blocks,
     });
   } catch (error) {
-    functions.logger.error("error.message", error.message);
-    functions.logger.error("error response", error.original.response.data);
     functions.logger.error("error", { error });
     functions.logger.log("blocks", { blocks });
   }
