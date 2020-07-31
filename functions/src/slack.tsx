@@ -12,7 +12,7 @@ import {
 } from "@speee-js/jsx-slack";
 
 import * as functions from "firebase-functions";
-import { App, ExpressReceiver } from "@slack/bolt";
+import { App, ExpressReceiver, BlockAction, ButtonAction } from "@slack/bolt";
 import { Product } from "./model/product";
 import { Condition, toURL } from "./model/condition";
 
@@ -24,13 +24,37 @@ const expressReceiver = new ExpressReceiver({
   processBeforeResponse: true,
 });
 
+export const slackApp = expressReceiver.app;
+
 const app = new App({
   receiver: expressReceiver,
   token: config.slack.bot_token,
   processBeforeResponse: true,
 });
 
-export const slackApp = expressReceiver.app;
+const ACTION_ID = {
+  LIKE: "like",
+} as const;
+
+app.action<BlockAction<ButtonAction>>(
+  ACTION_ID.LIKE,
+  async ({ action, body, ack, say }) => {
+    await ack();
+    await say(`<@${body.user.id}> clicked the button`);
+
+    let value;
+    try {
+      value = JSON.parse(action.value);
+    } catch {}
+    const { conditionId, productId } = value;
+    if (!conditionId || !productId) {
+      functions.logger.error("Failed to parse action value", action.value);
+      return;
+    }
+
+    functions.logger.log("value", value);
+  }
+);
 
 // Slack が受け付ける blocks は最大 50 要素なので、それ以下にしておく
 const MAX_PRODUCTS = 20;
@@ -67,7 +91,7 @@ export const sendProducts = async (
           </Section>
           <Actions>
             <Button
-              actionId="like"
+              actionId={ACTION_ID.LIKE}
               value={JSON.stringify({
                 conditionId: condition.id,
                 productId: product.id,

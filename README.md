@@ -29,9 +29,16 @@
 1. [Bolt 入門ガイド](https://slack.dev/bolt-js/ja-jp/tutorial/getting-started) の「アプリを作成する」「トークンとアプリのインストール」に従って、Slack アプリを作成
 
 1. 「[イベントの設定](https://slack.dev/bolt-js/ja-jp/tutorial/getting-started#%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AE%E8%A8%AD%E5%AE%9A)」を参考にして Event Subscriptions を有効化
+
    1. Enable Events を On に変更
    1. Request URL に `https://asia-northeast1-<FirebaseのプロジェクトID>.cloudfunctions.net/slack/events` と入力
    1. Subscribe to bot events で `message.channels` を選択
+   1. 設定を保存
+
+1. 「[アクションの送信と応答](https://slack.dev/bolt-js/ja-jp/tutorial/getting-started#%E3%82%A2%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%E3%81%AE%E9%80%81%E4%BF%A1%E3%81%A8%E5%BF%9C%E7%AD%94)」を参考にして Interactivity を有効化
+
+   1. Interactivity & Shortcuts の Interactivity を On に変更
+   1. Request URL に `https://asia-northeast1-<FirebaseのプロジェクトID>.cloudfunctions.net/slack/events` と入力（前項と同じ URL）
    1. 設定を保存
 
 ### デプロイ
