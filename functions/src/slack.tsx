@@ -33,13 +33,14 @@ const app = new App({
 
 const ACTION_ID = {
   LIKE: "like",
+  UNLIKE: "unlike",
 } as const;
 
 app.action<BlockAction<ButtonAction>>(
   ACTION_ID.LIKE,
-  async ({ action, body, ack, say }) => {
+  async ({ action, body, ack, respond }) => {
     await ack();
-    await say(`<@${body.user.id}> clicked the button`);
+    // functions.logger.log("body", { body });
 
     let value;
     try {
@@ -50,8 +51,44 @@ app.action<BlockAction<ButtonAction>>(
       functions.logger.error("Failed to parse action value", action.value);
       return;
     }
+    functions.logger.log("value", { value });
 
-    functions.logger.log("value", value);
+    // blocks の内容を更新する
+    const blocks = body.message!.blocks.map((block) => {
+      if (block.type === "actions" && block.block_id === action.block_id) {
+        return (
+          <Actions>
+            <Button actionId={ACTION_ID.LIKE} value={action.value}>
+              気にならない
+            </Button>
+          </Actions>
+        );
+      }
+      if ("accessory" in block) {
+        const { type, alt_text, image_url } = block.accessory;
+        return {
+          ...block,
+          block_id: undefined,
+          // accessory に不要なプロパティがあると 404 が返ってくるので注意
+          accessory: { type, alt_text, image_url },
+        };
+      }
+      return {
+        ...block,
+        block_id: undefined,
+      };
+    });
+
+    try {
+      await respond({
+        response_type: "in_channel",
+        replace_original: true,
+        text: body.message?.text,
+        blocks,
+      });
+    } catch (error) {
+      functions.logger.error("error", { error });
+    }
   }
 );
 

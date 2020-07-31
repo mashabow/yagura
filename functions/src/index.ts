@@ -38,6 +38,8 @@ const runImpl = async (): Promise<void> => {
 
     if (newProducts.length) {
       await sendProducts(condition, newProducts);
+    } else {
+      await sendProducts(condition, products.slice(3));
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
