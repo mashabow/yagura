@@ -29,7 +29,6 @@ export const slackApp = expressReceiver.app;
 const app = new App({
   receiver: expressReceiver,
   token: config.slack.bot_token,
-  processBeforeResponse: true,
 });
 
 const ACTION_ID = {
