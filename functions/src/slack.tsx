@@ -92,14 +92,17 @@ app.action<BlockAction<ButtonAction>>(
   }
 );
 
-// Slack が受け付ける blocks は最大 50 要素なので、それ以下にしておく
-const MAX_PRODUCTS = 20;
+type ChatPostMessageArguments = NonNullable<
+  Parameters<typeof app.client.chat.postMessage>[0]
+>;
+type Message = Pick<ChatPostMessageArguments, "text" | "blocks">;
 
-export const sendProducts = async (
+const buildHeader = (
   condition: Condition,
   products: readonly Product[]
-): Promise<void> => {
-  const blocks = JSXSlack(
+): Message => ({
+  text: `[${condition.keyword}] の新着：${products.length}件`,
+  blocks: JSXSlack(
     <Blocks>
       <Section>
         🔍 検索条件{" "}
@@ -108,52 +111,73 @@ export const sendProducts = async (
         </a>{" "}
         の新着：{products.length}件
       </Section>
-      {products.slice(0, MAX_PRODUCTS).map((product) => (
-        <Fragment>
-          <Section>
-            <strong>
-              <a
-                href={`https://page.auctions.yahoo.co.jp/jp/auction/${product.id}`}
-              >
-                {product.title}
-              </a>
-            </strong>
-            <Field>💰 {product.price.toLocaleString()}円</Field>
-            <Field>👤 {product.seller}</Field>
-            <Field>
-              🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
-            </Field>
-            <Image src={product.image} alt="商品画像" />
-          </Section>
-          <Actions>
-            <Button
-              actionId={ACTION_ID.LIKE}
-              value={JSON.stringify({
-                conditionId: condition.id,
-                productId: product.id,
-              })}
-            >
-              気になる
-            </Button>
-          </Actions>
-        </Fragment>
-      ))}
-      {products.length > MAX_PRODUCTS && (
-        <Section>ほか{products.length - MAX_PRODUCTS}件</Section>
-      )}
-      <Divider />
     </Blocks>
-  );
+  ),
+});
 
+const buildProduct = (condition: Condition, product: Product): Message => ({
+  text: product.title,
+  blocks: JSXSlack(
+    <Blocks>
+      <Section>
+        <strong>
+          <a
+            href={`https://page.auctions.yahoo.co.jp/jp/auction/${product.id}`}
+          >
+            {product.title}
+          </a>
+        </strong>
+        <Field>💰 {product.price.toLocaleString()}円</Field>
+        <Field>👤 {product.seller}</Field>
+        <Field>
+          🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
+        </Field>
+        <Image src={product.image} alt="商品画像" />
+      </Section>
+      <Actions>
+        <Button
+          actionId={ACTION_ID.LIKE}
+          value={JSON.stringify({
+            conditionId: condition.id,
+            productId: product.id,
+          })}
+        >
+          気になる
+        </Button>
+      </Actions>
+    </Blocks>
+  ),
+});
+
+const buildFooter = (restCount: number): Message => ({
+  text: `ほか${restCount}件`,
+});
+
+const post = async ({ text, blocks }: Message): Promise<void> => {
   try {
     await app.client.chat.postMessage({
       token: config.slack.bot_token,
       channel: "C018EDJ858Q", // TODO: 自動で設定
-      text: `[${condition.keyword}] の新着：${products.length}件`,
+      text,
       blocks,
     });
   } catch (error) {
     functions.logger.error("error", { error });
     functions.logger.log("blocks", { blocks });
+  }
+};
+
+const MAX_PRODUCTS = 20;
+
+export const postProducts = async (
+  condition: Condition,
+  products: readonly Product[]
+): Promise<void> => {
+  await post(buildHeader(condition, products));
+  for (const product of products.slice(0, MAX_PRODUCTS)) {
+    await post(buildProduct(condition, product));
+  }
+  if (products.length > MAX_PRODUCTS) {
+    await post(buildFooter(products.length - MAX_PRODUCTS));
   }
 };

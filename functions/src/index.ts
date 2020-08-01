@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { scrapeProducts } from "./scraper";
-import { slackApp, sendProducts } from "./slack";
+import { slackApp, postProducts } from "./slack";
 import { ConditionRepository } from "./repository/conditionRepository";
 import { ProductRepository } from "./repository/productRepository";
 import { defaultConditions } from "./model/condition";
@@ -37,9 +37,9 @@ const runImpl = async (): Promise<void> => {
     await conditionRepository.set({ ...condition, lastAccess: newLastAccess });
 
     if (newProducts.length) {
-      await sendProducts(condition, newProducts);
+      await postProducts(condition, newProducts);
     } else {
-      await sendProducts(condition, products.slice(3));
+      await postProducts(condition, products.slice(0, 3));
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
