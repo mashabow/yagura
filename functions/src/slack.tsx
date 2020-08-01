@@ -10,6 +10,7 @@ import {
 
 import * as functions from "firebase-functions";
 import { App, ExpressReceiver, BlockAction, ButtonAction } from "@slack/bolt";
+import { KnownBlock } from "@slack/types";
 import { Product } from "./model/product";
 import { Condition, toURL } from "./model/condition";
 
@@ -50,7 +51,11 @@ app.action<BlockAction<ButtonAction>>(
     functions.logger.log("value", { value });
 
     // blocks の内容を更新する
-    const blocks = body.message!.blocks.map((block) => {
+    if (!body.message) {
+      functions.logger.error("Message not found", body);
+      return;
+    }
+    const blocks = (body.message.blocks as KnownBlock[]).map((block) => {
       if (block.block_id === action.block_id) {
         return {
           ...block,
@@ -62,8 +67,8 @@ app.action<BlockAction<ButtonAction>>(
           ),
         };
       }
-      if (block.accessory?.type === "image") {
-        const { alt_text, image_url } = block.accessory;
+      if ("accessory" in block && block.accessory?.type === "image") {
+        const { alt_text, image_url } = block.accessory as any;
         return {
           ...block,
           block_id: undefined,
@@ -90,10 +95,10 @@ app.action<BlockAction<ButtonAction>>(
   }
 );
 
-type ChatPostMessageArguments = NonNullable<
-  Parameters<typeof app.client.chat.postMessage>[0]
->;
-type Message = Pick<ChatPostMessageArguments, "text" | "blocks">;
+type Message = {
+  text: string;
+  blocks?: KnownBlock[];
+};
 
 const buildHeader = (
   condition: Condition,
