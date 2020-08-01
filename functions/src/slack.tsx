@@ -6,6 +6,7 @@ import {
   Image,
   Field,
   Button,
+  Divider,
 } from "@speee-js/jsx-slack";
 
 import * as functions from "firebase-functions";
@@ -148,6 +149,7 @@ const buildProduct = (condition: Condition, product: Product): Message => ({
         </Field>
         <Image src={product.image} alt="商品画像" />
       </Section>
+      <Divider />
     </Blocks>
   ),
 });
