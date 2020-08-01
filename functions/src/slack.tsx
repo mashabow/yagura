@@ -5,10 +5,7 @@ import {
   Section,
   Image,
   Field,
-  Divider,
   Button,
-  Fragment,
-  Actions,
 } from "@speee-js/jsx-slack";
 
 import * as functions from "firebase-functions";
@@ -40,7 +37,6 @@ app.action<BlockAction<ButtonAction>>(
   ACTION_ID.LIKE,
   async ({ action, body, ack, respond }) => {
     await ack();
-    // functions.logger.log("body", { body });
 
     let value;
     try {
@@ -55,22 +51,24 @@ app.action<BlockAction<ButtonAction>>(
 
     // blocks の内容を更新する
     const blocks = body.message!.blocks.map((block) => {
-      if (block.type === "actions" && block.block_id === action.block_id) {
-        return (
-          <Actions>
-            <Button actionId={ACTION_ID.LIKE} value={action.value}>
-              気にならない
+      if (block.block_id === action.block_id) {
+        return {
+          ...block,
+          block_id: undefined,
+          accessory: (
+            <Button actionId={ACTION_ID.UNLIKE} value={action.value}>
+              ⭐️
             </Button>
-          </Actions>
-        );
+          ),
+        };
       }
-      if ("accessory" in block) {
-        const { type, alt_text, image_url } = block.accessory;
+      if (block.accessory?.type === "image") {
+        const { alt_text, image_url } = block.accessory;
         return {
           ...block,
           block_id: undefined,
           // accessory に不要なプロパティがあると 404 が返ってくるので注意
-          accessory: { type, alt_text, image_url },
+          accessory: { type: "image", alt_text, image_url },
         };
       }
       return {
@@ -127,14 +125,6 @@ const buildProduct = (condition: Condition, product: Product): Message => ({
             {product.title}
           </a>
         </strong>
-        <Field>💰 {product.price.toLocaleString()}円</Field>
-        <Field>👤 {product.seller}</Field>
-        <Field>
-          🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
-        </Field>
-        <Image src={product.image} alt="商品画像" />
-      </Section>
-      <Actions>
         <Button
           actionId={ACTION_ID.LIKE}
           value={JSON.stringify({
@@ -142,9 +132,17 @@ const buildProduct = (condition: Condition, product: Product): Message => ({
             productId: product.id,
           })}
         >
-          気になる
+          ☆
         </Button>
-      </Actions>
+      </Section>
+      <Section>
+        <Field>💰 {product.price.toLocaleString()}円</Field>
+        <Field>👤 {product.seller}</Field>
+        <Field>
+          🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
+        </Field>
+        <Image src={product.image} alt="商品画像" />
+      </Section>
     </Blocks>
   ),
 });
