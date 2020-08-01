@@ -6,4 +6,5 @@ export interface Product {
   readonly seller: string;
   readonly start: Date;
   readonly end: Date;
+  readonly starred: boolean;
 }

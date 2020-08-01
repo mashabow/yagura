@@ -39,7 +39,6 @@ export const createSlackApp = (productRepo: ProductRepository) => {
 
 const ACTION_ID = {
   STAR: "star",
-  UNSTAR: "unstar",
 } as const;
 
 app.action<BlockAction<ButtonAction>>(
@@ -51,9 +50,15 @@ app.action<BlockAction<ButtonAction>>(
     try {
       value = JSON.parse(action.value);
     } catch {}
-    const { conditionId, productId } = value;
-    if (!conditionId || !productId) {
-      functions.logger.error("Failed to parse action value", action.value);
+    const { conditionId, productId, starred } = value;
+    if (
+      !(
+        typeof conditionId === "string" &&
+        typeof productId === "string" &&
+        typeof starred === "boolean"
+      )
+    ) {
+      functions.logger.error("Invalid action value", action.value);
       return;
     }
     functions.logger.log("value", { value });
@@ -69,8 +74,15 @@ app.action<BlockAction<ButtonAction>>(
           ...block,
           block_id: undefined,
           accessory: (
-            <Button actionId={ACTION_ID.UNSTAR} value={action.value}>
-              ⭐️
+            <Button
+              actionId={ACTION_ID.STAR}
+              value={JSON.stringify({
+                conditionId,
+                productId,
+                starred: !starred,
+              })}
+            >
+              {starred ? "⭐️" : "☆"}
             </Button>
           ),
         };
@@ -143,9 +155,10 @@ const buildProduct = (condition: Condition, product: Product): Message => ({
           value={JSON.stringify({
             conditionId: condition.id,
             productId: product.id,
+            starred: !product.starred, // 次の状態
           })}
         >
-          ☆
+          {product.starred ? "⭐️" : "☆"}
         </Button>
       </Section>
       <Section>
