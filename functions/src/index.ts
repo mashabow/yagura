@@ -1,20 +1,18 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { scrapeProducts } from "./scraper";
-import { slackApp, postProducts } from "./slack";
+import { createSlackApp, postProducts } from "./slack";
 import { ConditionRepository } from "./repository/conditionRepository";
 import { ProductRepository } from "./repository/productRepository";
 import { defaultConditions } from "./model/condition";
 
 admin.initializeApp();
 
-const functionBuilder = functions.region("asia-northeast1");
+const db = admin.firestore();
+const conditionRepository = new ConditionRepository(db);
+const productRepository = new ProductRepository(db);
 
 const runImpl = async (): Promise<void> => {
-  const db = admin.firestore();
-  const conditionRepository = new ConditionRepository(db);
-  const productRepository = new ProductRepository(db);
-
   const storedConditions = await conditionRepository.getAll();
   functions.logger.log("storedConditions.length", storedConditions.length);
   const conditions = storedConditions.length
@@ -46,6 +44,8 @@ const runImpl = async (): Promise<void> => {
   }
 };
 
+const functionBuilder = functions.region("asia-northeast1");
+
 export const run = functionBuilder.https.onRequest(async (req, res) => {
   await runImpl();
   res.sendStatus(200);
@@ -57,4 +57,6 @@ export const scheduledRun = functionBuilder.pubsub
     await runImpl();
   });
 
-export const slack = functionBuilder.https.onRequest(slackApp);
+export const slack = functionBuilder.https.onRequest(
+  createSlackApp(productRepository)
+);

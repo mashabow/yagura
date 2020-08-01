@@ -14,6 +14,7 @@ import { App, ExpressReceiver, BlockAction, ButtonAction } from "@slack/bolt";
 import { KnownBlock } from "@slack/types";
 import { Product } from "./model/product";
 import { Condition, toURL } from "./model/condition";
+import { ProductRepository } from "./repository/productRepository";
 
 const config = functions.config();
 
@@ -23,12 +24,18 @@ const expressReceiver = new ExpressReceiver({
   processBeforeResponse: true,
 });
 
-export const slackApp = expressReceiver.app;
-
 const app = new App({
   receiver: expressReceiver,
   token: config.slack.bot_token,
 });
+
+// TODO: なんとかする
+let productRepository: ProductRepository;
+
+export const createSlackApp = (productRepo: ProductRepository) => {
+  productRepository = productRepo;
+  return expressReceiver.app;
+};
 
 const ACTION_ID = {
   STAR: "star",
