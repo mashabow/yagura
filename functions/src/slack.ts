@@ -62,7 +62,7 @@ app.action<BlockAction<ButtonAction>>(
       return;
     }
     const updatedProduct = { ...product, starred };
-    productRepository.set(conditionId, updatedProduct);
+    await productRepository.set(conditionId, updatedProduct);
 
     // メッセージ更新
     const updatedMessage = buildProductMessage(
