@@ -31,12 +31,12 @@ const app = new App({
 });
 
 const ACTION_ID = {
-  LIKE: "like",
-  UNLIKE: "unlike",
+  STAR: "star",
+  UNSTAR: "unstar",
 } as const;
 
 app.action<BlockAction<ButtonAction>>(
-  ACTION_ID.LIKE,
+  ACTION_ID.STAR,
   async ({ action, body, ack, respond }) => {
     await ack();
 
@@ -62,7 +62,7 @@ app.action<BlockAction<ButtonAction>>(
           ...block,
           block_id: undefined,
           accessory: (
-            <Button actionId={ACTION_ID.UNLIKE} value={action.value}>
+            <Button actionId={ACTION_ID.UNSTAR} value={action.value}>
               ⭐️
             </Button>
           ),
@@ -132,7 +132,7 @@ const buildProduct = (condition: Condition, product: Product): Message => ({
           </a>
         </strong>
         <Button
-          actionId={ACTION_ID.LIKE}
+          actionId={ACTION_ID.STAR}
           value={JSON.stringify({
             conditionId: condition.id,
             productId: product.id,
