@@ -63,51 +63,22 @@ app.action<BlockAction<ButtonAction>>(
     }
     functions.logger.log("value", { value });
 
-    // blocks の内容を更新する
-    if (!body.message) {
-      functions.logger.error("Message not found", body);
+    // リポジトリ内のデータを更新
+    const product = await productRepository.get(conditionId, productId);
+    if (!product) {
+      functions.logger.error("Product not found", { conditionId, productId });
       return;
     }
-    const blocks = (body.message.blocks as KnownBlock[]).map((block) => {
-      if (block.block_id === action.block_id) {
-        return {
-          ...block,
-          block_id: undefined,
-          accessory: (
-            <Button
-              actionId={ACTION_ID.STAR}
-              value={JSON.stringify({
-                conditionId,
-                productId,
-                starred: !starred,
-              })}
-            >
-              {starred ? "⭐️" : "☆"}
-            </Button>
-          ),
-        };
-      }
-      if ("accessory" in block && block.accessory?.type === "image") {
-        const { alt_text, image_url } = block.accessory as any;
-        return {
-          ...block,
-          block_id: undefined,
-          // accessory に不要なプロパティがあると 404 が返ってくるので注意
-          accessory: { type: "image", alt_text, image_url },
-        };
-      }
-      return {
-        ...block,
-        block_id: undefined,
-      };
-    });
+    const updatedProduct = { ...product, starred };
+    productRepository.set(conditionId, updatedProduct);
 
+    // メッセージ更新
+    const updatedMessage = buildProductMessage(conditionId, updatedProduct);
     try {
       await respond({
+        ...updatedMessage,
         response_type: "in_channel",
         replace_original: true,
-        text: body.message?.text,
-        blocks,
       });
     } catch (error) {
       functions.logger.error("error", { error });
@@ -120,7 +91,7 @@ type Message = {
   blocks?: KnownBlock[];
 };
 
-const buildHeader = (
+const buildHeaderMessage = (
   condition: Condition,
   products: readonly Product[]
 ): Message => ({
@@ -138,7 +109,10 @@ const buildHeader = (
   ),
 });
 
-const buildProduct = (condition: Condition, product: Product): Message => ({
+const buildProductMessage = (
+  conditionId: string,
+  product: Product
+): Message => ({
   text: product.title,
   blocks: JSXSlack(
     <Blocks>
@@ -153,7 +127,7 @@ const buildProduct = (condition: Condition, product: Product): Message => ({
         <Button
           actionId={ACTION_ID.STAR}
           value={JSON.stringify({
-            conditionId: condition.id,
+            conditionId: conditionId,
             productId: product.id,
             starred: !product.starred, // 次の状態
           })}
@@ -174,7 +148,7 @@ const buildProduct = (condition: Condition, product: Product): Message => ({
   ),
 });
 
-const buildFooter = (restCount: number): Message => ({
+const buildFooterMessage = (restCount: number): Message => ({
   text: `ほか${restCount}件`,
 });
 
@@ -198,11 +172,11 @@ export const postProducts = async (
   condition: Condition,
   products: readonly Product[]
 ): Promise<void> => {
-  await post(buildHeader(condition, products));
+  await post(buildHeaderMessage(condition, products));
   for (const product of products.slice(0, MAX_PRODUCTS)) {
-    await post(buildProduct(condition, product));
+    await post(buildProductMessage(condition.id, product));
   }
   if (products.length > MAX_PRODUCTS) {
-    await post(buildFooter(products.length - MAX_PRODUCTS));
+    await post(buildFooterMessage(products.length - MAX_PRODUCTS));
   }
 };
