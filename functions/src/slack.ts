@@ -1,20 +1,14 @@
-/** @jsx JSXSlack.h **/
-import {
-  JSXSlack,
-  Blocks,
-  Section,
-  Image,
-  Field,
-  Button,
-  Divider,
-} from "@speee-js/jsx-slack";
-
 import * as functions from "firebase-functions";
 import { App, ExpressReceiver, BlockAction, ButtonAction } from "@slack/bolt";
-import { KnownBlock } from "@slack/types";
 import { Product } from "./model/product";
-import { Condition, toURL } from "./model/condition";
+import { Condition } from "./model/condition";
 import { ProductRepository } from "./repository/productRepository";
+import {
+  Message,
+  buildHeaderMessage,
+  buildProductMessage,
+  buildFooterMessage,
+} from "./message";
 
 const config = functions.config();
 
@@ -37,12 +31,10 @@ export const createSlackApp = (productRepo: ProductRepository) => {
   return expressReceiver.app;
 };
 
-const ACTION_ID = {
-  STAR: "star",
-} as const;
+const STAR_ACTION_ID = "star";
 
 app.action<BlockAction<ButtonAction>>(
-  ACTION_ID.STAR,
+  STAR_ACTION_ID,
   async ({ action, body, ack, respond }) => {
     await ack();
 
@@ -73,7 +65,11 @@ app.action<BlockAction<ButtonAction>>(
     productRepository.set(conditionId, updatedProduct);
 
     // メッセージ更新
-    const updatedMessage = buildProductMessage(conditionId, updatedProduct);
+    const updatedMessage = buildProductMessage(
+      conditionId,
+      updatedProduct,
+      STAR_ACTION_ID
+    );
     try {
       await respond({
         ...updatedMessage,
@@ -85,72 +81,6 @@ app.action<BlockAction<ButtonAction>>(
     }
   }
 );
-
-type Message = {
-  text: string;
-  blocks?: KnownBlock[];
-};
-
-const buildHeaderMessage = (
-  condition: Condition,
-  products: readonly Product[]
-): Message => ({
-  text: `[${condition.keyword}] の新着：${products.length}件`,
-  blocks: JSXSlack(
-    <Blocks>
-      <Section>
-        🔍 検索条件{" "}
-        <a href={toURL(condition)}>
-          <code>{condition.keyword}</code>
-        </a>{" "}
-        の新着：{products.length}件
-      </Section>
-    </Blocks>
-  ),
-});
-
-const buildProductMessage = (
-  conditionId: string,
-  product: Product
-): Message => ({
-  text: product.title,
-  blocks: JSXSlack(
-    <Blocks>
-      <Section>
-        <strong>
-          <a
-            href={`https://page.auctions.yahoo.co.jp/jp/auction/${product.id}`}
-          >
-            {product.title}
-          </a>
-        </strong>
-        <Button
-          actionId={ACTION_ID.STAR}
-          value={JSON.stringify({
-            conditionId: conditionId,
-            productId: product.id,
-            starred: !product.starred, // 次の状態
-          })}
-        >
-          {product.starred ? "⭐️" : "☆"}
-        </Button>
-      </Section>
-      <Section>
-        <Field>💰 {product.price.toLocaleString()}円</Field>
-        <Field>👤 {product.seller}</Field>
-        <Field>
-          🕒 <time dateTime={product.end}>{"{date_pretty} {time}"}</time>
-        </Field>
-        <Image src={product.image} alt="商品画像" />
-      </Section>
-      <Divider />
-    </Blocks>
-  ),
-});
-
-const buildFooterMessage = (restCount: number): Message => ({
-  text: `ほか${restCount}件`,
-});
 
 const post = async ({ text, blocks }: Message): Promise<void> => {
   try {
@@ -174,7 +104,7 @@ export const postProducts = async (
 ): Promise<void> => {
   await post(buildHeaderMessage(condition, products));
   for (const product of products.slice(0, MAX_PRODUCTS)) {
-    await post(buildProductMessage(condition.id, product));
+    await post(buildProductMessage(condition.id, product, STAR_ACTION_ID));
   }
   if (products.length > MAX_PRODUCTS) {
     await post(buildFooterMessage(products.length - MAX_PRODUCTS));
