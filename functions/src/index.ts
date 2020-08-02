@@ -54,8 +54,6 @@ const runImpl = async (): Promise<void> => {
 
     if (newProducts.length) {
       await postProducts(condition, newProducts);
-    } else {
-      await postProducts(condition, products.slice(0, 3));
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
