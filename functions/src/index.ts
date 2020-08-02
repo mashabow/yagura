@@ -5,6 +5,7 @@ import { createSlackApp, postProducts } from "./slack";
 import { ConditionRepository } from "./repository/conditionRepository";
 import { ProductRepository } from "./repository/productRepository";
 import { defaultConditions } from "./model/condition";
+import { Product } from "./model/product";
 
 admin.initializeApp();
 
@@ -24,14 +25,31 @@ const runImpl = async (): Promise<void> => {
 
     const newLastAccess = new Date();
     const products = await scrapeProducts(condition);
-    const newProducts = products.filter(
-      (product) => condition.lastAccess < product.start
-    );
-    functions.logger.log("newProducts.length", newProducts.length);
 
-    for (const product of newProducts) {
-      await productRepository.set(condition.id, product);
-    }
+    const newProducts = (
+      await Promise.all(
+        products.map(
+          async (product): Promise<Product | null> => {
+            // 前回取得時にすでに開始されていた商品は無視
+            if (product.start < condition.lastAccess) return null;
+            const storedProduct = await productRepository.get(
+              condition.id,
+              product.id
+            );
+            // スターなしの再出品は無視
+            if (storedProduct && !storedProduct.starred) return null;
+            const newProduct = {
+              ...product,
+              ...(storedProduct && { starred: storedProduct.starred }),
+            };
+            await productRepository.set(condition.id, newProduct);
+            return newProduct;
+          }
+        )
+      )
+    ).filter((p): p is Product => p !== null);
+    functions.logger.log("newProducts", { newProducts });
+
     await conditionRepository.set({ ...condition, lastAccess: newLastAccess });
 
     if (newProducts.length) {
