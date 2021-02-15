@@ -52,7 +52,6 @@ export const scrapeProducts = async (
         seller,
         start,
         end,
-        starred: false,
       };
     })
     .filter((product): product is Product => product !== null);
